@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 const double minHeight = 120;
 
@@ -9,22 +11,79 @@ class ExhibitionBottomSheet extends StatefulWidget {
 
 class _ExhibitionBottomSheetState extends State<ExhibitionBottomSheet>
     with SingleTickerProviderStateMixin {
+  AnimationController _controller;
+
+  double get maxHeight => MediaQuery.of(context).size.height;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 600),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double lerp(double min, double max) =>
+      lerpDouble(min, max, _controller.value);
+
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      height: minHeight,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 32),
-        decoration: BoxDecoration(
-          color: Color(0xFF162A49),
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(32),
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Positioned(
+          height: lerp(minHeight, maxHeight),
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: GestureDetector(
+            onTap: _toggle,
+            onVerticalDragUpdate: _handleDragUpdate,
+            onVerticalDragEnd: _handleDragEnd,
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 32),
+              decoration: BoxDecoration(
+                color: Color(0xFF162A49),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(32),
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  void _handleDragUpdate(DragUpdateDetails details) {
+    _controller.value -= details.primaryDelta / maxHeight;
+  }
+
+  void _handleDragEnd(DragEndDetails details) {
+    if (_controller.isAnimating ||
+        _controller.status == AnimationStatus.completed) return;
+
+    final double flingVelocity =
+        details.velocity.pixelsPerSecond.dy / maxHeight;
+
+    if (flingVelocity < 0) {
+      _controller.fling(velocity: math.max(2, -flingVelocity));
+    } else if (flingVelocity > 0) {
+      _controller.fling(velocity: math.min(-2, -flingVelocity));
+    } else {
+      _controller.fling(velocity: _controller.value < 0.5 ? -2 : 2);
+    }
+  }
+
+  void _toggle() {
+    final bool isOpen = _controller.status == AnimationStatus.completed;
+    _controller.fling(velocity: isOpen ? -2 : 2);
   }
 }
