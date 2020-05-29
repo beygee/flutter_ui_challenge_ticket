@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:ui_challenge_ticket/exhibition_bottom_sheet.dart';
 import 'package:ui_challenge_ticket/sliding_cards_view.dart';
 import 'package:ui_challenge_ticket/tabs.dart';
 
@@ -19,7 +20,8 @@ class HomePage extends StatelessWidget {
                 SlidingCardsView(),
               ],
             ),
-          )
+          ),
+          ExhibitionBottomSheet(),
         ],
       ),
     );
